@@ -1,0 +1,6 @@
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\bin\Debug\40k System Generator.exe.config
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator.csprojResolveAssemblyReference.cache
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\MainWindow.g.cs
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\App.g.cs
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator_MarkupCompile.cache
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator_MarkupCompile.lref
