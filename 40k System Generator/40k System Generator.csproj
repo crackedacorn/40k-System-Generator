@@ -55,6 +55,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="life\Entity.cs" />
+    <Compile Include="life\Flora.cs" />
     <Compile Include="Planet - Copy.cs" />
     <Compile Include="Star.cs" />
     <Compile Include="StarSystem.cs" />
