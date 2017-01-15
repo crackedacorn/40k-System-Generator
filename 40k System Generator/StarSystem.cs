@@ -20,8 +20,6 @@ namespace WH40K_System_Generator
         InnerCauldron innerCauldron;
         OuterReaches outerReaches;
 
-        string notes;
-
         public StarSystem()
         {
             this.star = new Star();
@@ -244,7 +242,7 @@ namespace WH40K_System_Generator
                     while (p < 4)
                     {
                         p++;
-                        primarySphere.AddElement(new ZoneElementPlanet());
+                        primarySphere.AddElement(new ZoneElementPlanet(ZoneType.PrimarySphere));
                     }
                     break;
                 case KeyFeatureType.RuinedEmpire:
@@ -255,9 +253,9 @@ namespace WH40K_System_Generator
 
                     break;
                 case KeyFeatureType.Haven:
-                    innerCauldron.AddElement(new ZoneElementPlanet());
-                    primarySphere.AddElement(new ZoneElementPlanet());
-                    outerReaches.AddElement(new ZoneElementPlanet());
+                    innerCauldron.AddElement(new ZoneElementPlanet(ZoneType.InnerCauldron));
+                    primarySphere.AddElement(new ZoneElementPlanet(ZoneType.PrimarySphere));
+                    outerReaches.AddElement(new ZoneElementPlanet(ZoneType.OuterReaches));
                     break;
                 case KeyFeatureType.GravityTides:
                     int riptides = RNG.RandNumber(1, 5);
@@ -395,11 +393,11 @@ namespace WH40K_System_Generator
                 else if (roll < 42)
                     AddElement(new DustCloud());
                 else if (roll < 46)
-                    AddElement(new ZoneElementGasGiant());
+                    AddElement(new ZoneElementGasGiant(ZoneType.InnerCauldron));
                 else if (roll < 57)
                     AddElement(new GravityRiptide());
                 else if (roll < 77)
-                    AddElement(new ZoneElementPlanet());
+                    AddElement(new ZoneElementPlanet(ZoneType.InnerCauldron));
                 else if (roll < 89)
                     AddElement(new RadiationBursts());
                 else
@@ -446,7 +444,7 @@ namespace WH40K_System_Generator
                 else if (roll < 65)
                     AddElement(new GravityRiptide());
                 else if (roll < 94)
-                    AddElement(new ZoneElementPlanet());
+                    AddElement(new ZoneElementPlanet(ZoneType.PrimarySphere));
                 else
                     AddElement(new StarshipGraveyard());
 
@@ -491,11 +489,11 @@ namespace WH40K_System_Generator
                 else if (roll < 56)
                     AddElement(new DustCloud());
                 else if (roll < 74)
-                    AddElement(new ZoneElementGasGiant());
+                    AddElement(new ZoneElementGasGiant(ZoneType.OuterReaches));
                 else if (roll < 81)
                     AddElement(new GravityRiptide());
                 else if (roll < 94)
-                    AddElement(new ZoneElementPlanet());
+                    AddElement(new ZoneElementPlanet(ZoneType.OuterReaches));
                 else
                     AddElement(new StarshipGraveyard());
 
@@ -736,10 +734,10 @@ namespace WH40K_System_Generator
         Planet planet;
         public Planet GetPlanet { get { return planet; } }
 
-        public ZoneElementPlanet()
+        public ZoneElementPlanet(ZoneType zoneType)
             : base("Planet")
         {
-            this.planet = new RockyPlanet();
+            this.planet = new RockyPlanet(zoneType);
         }
 
         public override string ToString()
@@ -754,7 +752,7 @@ namespace WH40K_System_Generator
     {
         Planet planet;
 
-        public ZoneElementGasGiant()
+        public ZoneElementGasGiant(ZoneType zone)
             : base("Gas Giant")
         {
             this.planet = new Planet();

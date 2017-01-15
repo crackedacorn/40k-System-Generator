@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:_40k_System_Generator"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="40K System Generator" Height="350" Width="700">
     <Grid>
-        
+
     </Grid>
 </Window>

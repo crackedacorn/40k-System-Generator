@@ -26,7 +26,7 @@ namespace WH40K_System_Generator
         MassiveGasGiant
     };
     internal enum Gravity { Low = 0, Normal, High, Weak, Strong, Powerful, Titanic };
-    internal enum AtmospherePresence { None = 0, Tin, Moderate, Heavy };
+    internal enum AtmospherePresence { None = 0, Thin, Moderate, Heavy };
     internal enum AtmosphereComposition { Deadly = 0, Corrosive, Toxic, Tainted, Pure };
     internal enum Climate { Burning = 0, Hot, Temperate, Cold, Ice };
 
@@ -53,10 +53,6 @@ namespace WH40K_System_Generator
         public List<OrbitalFeature> orbitalFeatures = new List<OrbitalFeature>();
         internal Gravity gravity;
         internal Body planetBody;
-        internal AtmospherePresence atmospherePresence;
-        internal AtmosphereComposition atmosphereComposition;
-        internal Climate planetClimate;
-        internal Habitability planetHabitability;
         internal bool isMoon = false;
         internal bool isLesserMoon = false;
         internal List<Planet> moonList = new List<Planet>();
@@ -120,13 +116,10 @@ namespace WH40K_System_Generator
             {
                 int roll = RNG.RandNumber(0, 101);
 
+                GravityModifications(roll, this.gravity);
+
                 if (planet.GetType() == typeof(RockyPlanet))
                 {
-                    if (planet.gravity == Gravity.Low)
-                        roll = Math.Min(0, roll - 10);
-                    else if (planet.gravity == Gravity.High)
-                        roll = Math.Min(100, roll + 10);
-
                     if (roll <= 45)
                         orbitalFeatures.Add(OrbitalFeature.NoFeatures);
                     else if (roll <= 60)
@@ -144,15 +137,6 @@ namespace WH40K_System_Generator
                 }
                 else if (planet.GetType() == typeof(GasGiant))
                 {
-                    if (planet.gravity == Gravity.Weak)
-                        roll = Math.Min(100, roll + 10);
-                    else if (planet.gravity == Gravity.Strong)
-                        roll = Math.Min(100, roll + 15);
-                    else if (planet.gravity == Gravity.Powerful)
-                        roll = Math.Min(100, roll + 20);
-                    else if (planet.gravity == Gravity.Titanic)
-                        roll = Math.Min(100, roll + 30);
-
                     if (roll <= 20)
                         orbitalFeatures.Add(OrbitalFeature.NoFeatures);
                     else if (roll <= 35)
@@ -178,8 +162,12 @@ namespace WH40K_System_Generator
 
     class RockyPlanet : Planet
     {
+        internal AtmospherePresence atmospherePresence;
+        internal AtmosphereComposition atmosphereComposition;
+        internal Climate planetClimate;
+        internal Habitability planetHabitability;
 
-        public RockyPlanet() : base()
+        public RockyPlanet(ZoneType zone) : base()
         {
             int gravityRoll = RNG.RandNumber(0, 11);
 
@@ -187,6 +175,108 @@ namespace WH40K_System_Generator
 
             GenerateRockyPlanetGravity(gravityRoll);
 
+            generateAtmosphere();
+
+            GenerateClimate(zone);
+
+            if (this.atmospherePresence != AtmospherePresence.None && (this.atmosphereComposition == AtmosphereComposition.Tainted || this.atmosphereComposition == AtmosphereComposition.Pure))
+                GenerateHabitability();
+        }
+
+        private void GenerateHabitability()
+        {
+            int roll = RNG.RandNumber(0, 11);
+
+            if (this.planetClimate == Climate.Hot || this.planetClimate == Climate.Cold)
+                roll -= 2;
+            if (this.planetClimate == Climate.Burning || this.planetClimate == Climate.Ice)
+            {
+                roll = Math.Min(7, roll - 7);
+            }
+
+            if (roll <= 1)
+                this.planetHabitability = Habitability.Inhospitable;
+            else if (roll <= 3)
+                this.planetHabitability = Habitability.TrappedWater;
+            else if (roll <= 5)
+                this.planetHabitability = Habitability.LiquidWater;
+            else if (roll <= 7)
+                this.planetHabitability = Habitability.LimitedEcosystem;
+            else
+                this.planetHabitability = Habitability.Verdant;
+
+        }
+
+        private void GenerateClimate(ZoneType zone)
+        {
+            if (this.atmospherePresence==AtmospherePresence.None)
+            {
+                if (zone == ZoneType.InnerCauldron)
+                    this.planetClimate = Climate.Burning;
+                else if (zone == ZoneType.OuterReaches)
+                    this.planetClimate = Climate.Ice;
+                else
+                {
+                    if (RNG.RandNumber(0, 100) < 51)
+                        this.planetClimate = Climate.Burning;
+                    else
+                        this.planetClimate = Climate.Ice;
+                }
+
+                return;
+            }
+
+            int roll = RNG.RandNumber(0, 11);
+
+            if (zone == ZoneType.InnerCauldron)
+                roll -= 6;
+            else if (zone == ZoneType.OuterReaches)
+                roll += 6;
+
+            if (roll <= 0)
+                this.planetClimate = Climate.Burning;
+            else if (roll <= 3)
+                this.planetClimate = Climate.Hot;
+            else if (roll <= 7)
+                this.planetClimate = Climate.Temperate;
+            else if (roll <= 10)
+                this.planetClimate = Climate.Cold;
+            else
+                this.planetClimate = Climate.Ice;
+        }
+
+        private void generateAtmosphere()
+        {
+            // Low gravity = -2 atmophshere presance, high = +1
+            int atmosphereRoll = RNG.RandNumber(0, 11);
+            if (this.gravity == Gravity.Low)
+                atmosphereRoll -= 2;
+            else if (this.gravity == Gravity.High)
+                atmosphereRoll += 1;
+
+            if (atmosphereRoll <= 1)
+            {
+                this.atmospherePresence = AtmospherePresence.None;
+                return;
+            }
+            else if (atmosphereRoll <= 4)
+                this.atmospherePresence = AtmospherePresence.Thin;
+            else if (atmosphereRoll <= 9)
+                this.atmospherePresence = AtmospherePresence.Moderate;
+            else
+                this.atmospherePresence = AtmospherePresence.Heavy;
+
+            atmosphereRoll = RNG.RandNumber(0, 11);
+            if (atmosphereRoll == 1)
+                this.atmosphereComposition = AtmosphereComposition.Deadly;
+            else if (atmosphereRoll == 2)
+                this.atmosphereComposition = AtmosphereComposition.Corrosive;
+            else if (atmosphereRoll <= 5)
+                this.atmosphereComposition = AtmosphereComposition.Toxic;
+            else if (atmosphereRoll <= 7)
+                this.atmosphereComposition = AtmosphereComposition.Tainted;
+            else
+                this.atmosphereComposition = AtmosphereComposition.Pure;
         }
 
         private int GenerateRockyPlanetBody(int gravityRoll)
