@@ -62,10 +62,11 @@ namespace WH40K_System_Generator
 
         public Planet()
         {
-
             generateOrbitalFeatures(this);
+
+            generateResources();
         }
-        
+
         public Planet(bool isMoon, bool isLesserMoon)
         {
             this.isMoon = isMoon;
@@ -74,11 +75,35 @@ namespace WH40K_System_Generator
             if (isLesserMoon)
             {
                 // lesser moon 6+ has 5d10+5 Abundance of a Mineral Resource
-                if (RNG.RandNumber(0,11)>=6)
+                if (RNG.RandNumber(0, 11) >= 6)
                 {
                     this.resourcesAvailable.Add(new MineralResource(RNG.RandNumber(4, 51) + 5));
                 }
             }
+        }
+
+        internal void generateResources()
+        {
+            int baseResourcesAmt = 0;
+            int additionalResourcesAmt = 0;
+
+
+            if (this.planetBody == Body.Small || this.planetBody == Body.SmallDense)
+            {
+                baseResourcesAmt = Math.Max(0, RNG.RandNumber(1, 6) - 2);
+                additionalResourcesAmt = Math.Max(0, RNG.RandNumber(1, 6) - 3);
+            }
+            else if (this.planetBody == Body.Large || this.planetBody == Body.LargeDense)
+            {
+                baseResourcesAmt = RNG.RandNumber(0, 6);
+                additionalResourcesAmt = Math.Max(0, RNG.RandNumber(1, 6) - 2);
+            }
+            else if (this.planetBody == Body.Vast)
+            {
+                baseResourcesAmt = RNG.RandNumber(0, 11);
+                additionalResourcesAmt = Math.Max(0, RNG.RandNumber(1, 6) - 1);
+            }
+
         }
 
         internal int GravityModifications(int roll, Gravity gravity)
@@ -164,6 +189,7 @@ namespace WH40K_System_Generator
 
     class RockyPlanet : Planet
     {
+        internal List<Territory> territories = new List<Territory>();
         internal AtmospherePresence atmospherePresence;
         internal AtmosphereComposition atmosphereComposition;
         internal Climate planetClimate;
@@ -201,12 +227,40 @@ namespace WH40K_System_Generator
             returnString += "\n\t\tLandmasses: " + landmasses.ToString();
             if (landmasses != LandmassType.superContinent && numberOfContinents>0)
                 returnString += " (" + numberOfContinents + ")";
+            if (territories.LongCount() > 0)
+            {
+                returnString += "\n\t\tEnvironments:";
+                foreach (Territory t in territories)
+                {
+                    returnString += t.ToString();
+                }
+            }
 
             return returnString;
         }
 
         private void GenerateEnvironments()
-        { }
+        {
+            if (this.planetHabitability != Habitability.LimitedEcosystem && this.planetHabitability != Habitability.Verdant && this.planetHabitability!=Habitability.LiquidWater)
+                return;
+
+            int numberOfTerritories = RNG.RandNumber(1, 6);
+
+            if (this.planetBody == Body.Small)
+                numberOfTerritories -= 2;
+            if (this.planetBody == Body.Vast)
+                numberOfContinents += 3;
+            if (this.planetHabitability == Habitability.Verdant)
+                numberOfContinents += 2;
+
+            if (numberOfTerritories <= 0)
+                return;
+
+            for (int i = 1; i <= numberOfTerritories; i++)
+            {
+                territories.Add(new Territory());
+            }
+        }
 
         private void GenerateLandmasses()
         {
@@ -495,12 +549,12 @@ namespace WH40K_System_Generator
     class Territory
     {
         internal Tuple<string,string,TerritoryBaseTerrain> baseTerrain;
+        OrganicResource resource = null;
 
         public Territory()
         {
             int roll = RNG.RandNumber(0, 6);
             int traitRoll = RNG.RandNumber(0, 101);
-            int traitRoll2 = RNG.RandNumber(0, 101);
             string trait1 = string.Empty;
             string trait2 = string.Empty;
             TerritoryBaseTerrain terrain;
@@ -508,19 +562,6 @@ namespace WH40K_System_Generator
             if (roll == 1)
             {
                 terrain = TerritoryBaseTerrain.Forest;
-                if (roll < 96)
-                    trait1 = GenerateTrait(roll, terrain);
-                else
-                {
-                    while (roll >= 96)
-                        roll = RNG.RandNumber(0, 101);
-
-                    trait1 = GenerateTrait(roll, terrain);
-                    while (roll >= 96)
-                        roll = RNG.RandNumber(0, 101);
-
-                    trait2 = GenerateTrait(roll, terrain);
-                }
             }
             else if (roll == 2)
                 terrain = TerritoryBaseTerrain.Mountain;
@@ -531,27 +572,131 @@ namespace WH40K_System_Generator
             else
                 terrain = TerritoryBaseTerrain.Wasteland;
 
+
+            if (traitRoll < 96)
+                trait1 = GenerateTrait(traitRoll, terrain);
+            else // If Roll > 96, roll two traits.
+            {
+                while (traitRoll >= 96)
+                    traitRoll = RNG.RandNumber(0, 101);
+
+                roll = traitRoll;
+                traitRoll = RNG.RandNumber(0, 101);
+
+                trait1 = GenerateTrait(traitRoll, terrain);
+                while (traitRoll >= 96 || traitRoll == roll)
+                    traitRoll = RNG.RandNumber(0, 101);
+
+                trait2 = GenerateTrait(traitRoll, terrain);
+            }
+
             this.baseTerrain = new Tuple<string, string, TerritoryBaseTerrain>(trait1, trait2, terrain);
+        }
+
+        public override string ToString()
+        {
+            string returnString = string.Empty;
+            string trait1 = this.baseTerrain.Item1;
+            string trait2 = this.baseTerrain.Item2;
+            TerritoryBaseTerrain terrain = this.baseTerrain.Item3;
+
+            if (trait2 == string.Empty)
+                returnString = "\n\t\t\tEnvironment: " + terrain.ToString() + " (" + trait1 + ")";
+            else
+                returnString = "\n\t\t\tEnvironment: " + terrain.ToString() + " (" + trait1 + ", "+trait2+")";
+
+            if (terrain==TerritoryBaseTerrain.Forest)
+            {
+                if (trait1 == "Unique Compound")
+                    returnString += "\n\t\t\t\tResource: " + resource.ToString();
+                if (trait2 == "Unique Compound")
+                    returnString += "\n\t\t\t\tResource: " + resource.ToString();
+            }
+
+            return returnString;
         }
 
         internal string GenerateTrait(int roll, TerritoryBaseTerrain terrain)
         {
             string trait = string.Empty;
 
-            if (terrain==TerritoryBaseTerrain.Forest)
+            if (terrain == TerritoryBaseTerrain.Forest)
             {
                 if (roll <= 5)
                     trait = "Exotic Nature";
                 else if (roll <= 25)
                     trait = "Expansive";
                 else if (roll <= 40)
-                    trait="Extreme Temperature";
+                    trait = "Extreme Temperature";
                 else if (roll <= 65)
-                    trait="Notable Species";
+                    trait = "Notable Species";
                 else if (roll <= 80)
-                    trait="Unique Compound";
+                {
+                    trait = "Unique Compound";
+                    resource = new OrganicResource(RNG.RandNumber(1, 101));
+                }
                 else if (roll <= 95)
-                    trait="Unusual Location";
+                    trait = "Unusual Location";
+            }
+            else if (terrain == TerritoryBaseTerrain.Mountain)
+            {
+                if (roll <= 25)
+                    trait = "Boundary";
+                else if (roll <= 50)
+                    trait = "Expansive";
+                else if (roll <= 65)
+                    trait = "Extreme Temperature";
+                else if (roll <= 75)
+                    trait = "Foothills";
+                else if (roll <= 5)
+                    trait = "Notable Species";
+                else if (roll <= 95)
+                    trait = "Unusual Location";
+            }
+            else if (terrain == TerritoryBaseTerrain.Plains)
+            {
+                if (roll <= 10)
+                    trait = "Broken Ground";
+                else if (roll <= 30)
+                    trait = "Expansive";
+                else if (roll <= 45)
+                    trait = "Extreme Temperature";
+                else if (roll <= 70)
+                    trait = "Fertile";
+                else if (roll <= 85)
+                    trait = "Notable Species";
+                else if (roll <= 95)
+                    trait = "Unusual Location";
+            }
+            else if (terrain == TerritoryBaseTerrain.Swamp)
+            {
+                if (roll <= 10)
+                    trait = "Expansive";
+                else if (roll <= 30)
+                    trait = "Extreme Temperature";
+                else if (roll <= 45)
+                    trait = "Notable Species";
+                else if (roll <= 65)
+                    trait = "Stagnant";
+                else if (roll <= 75)
+                    trait = "Unusual Location";
+                else if (roll <= 95)
+                    trait = "Virulent";
+            }
+            else if (terrain == TerritoryBaseTerrain.Wasteland)
+            {
+                if (roll <= 20)
+                    trait = "Desolate";
+                else if (roll <= 40)
+                    trait = "Expansive";
+                else if (roll <= 70)
+                    trait = "Extreme Temperature";
+                else if (roll <= 75)
+                    trait = "Notable Species";
+                else if (roll <= 80)
+                    trait = "Ruined";
+                else if (roll <= 95)
+                    trait = "Unusual Location";
             }
 
             return trait;

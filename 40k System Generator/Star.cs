@@ -147,5 +147,6 @@ namespace WH40K_System_Generator
                     return ZoneStrength.Normal;
             }
         }
+        
     }
 }

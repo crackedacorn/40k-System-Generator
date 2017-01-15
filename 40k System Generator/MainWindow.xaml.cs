@@ -32,6 +32,8 @@ namespace _40k_System_Generator
         {
             ss = new StarSystem();
 
+            scrollTestingOutput.ScrollToHome();
+
             boxTestingOutput.IsReadOnly = false;
             boxTestingOutput.Text = string.Empty;
 

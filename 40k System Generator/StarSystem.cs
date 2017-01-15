@@ -308,7 +308,7 @@ namespace WH40K_System_Generator
 
         public override string ToString()
         {
-            string s = string.Empty;
+            string s = string.Empty+"\n\n";
 
             if (this.star.starType == StarType.Binary)
             {
