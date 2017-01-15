@@ -1,2 +1,3 @@
-# 40k-System-Generator
-System Generator for Warhammer 40k Rogue Trader
+# System Generator for Warhammer 40k Rogue Trader
+
+Interface is nonexistant so running program wont do anything yet.
