@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace WH40K_System_Generator
 {
@@ -31,7 +34,7 @@ namespace WH40K_System_Generator
     internal enum Climate { Burning = 0, Hot, Temperate, Cold, Ice };
     internal enum LandmassType {[Description("Multiple Landmasess")] multipleLandmasses = 0, [Description("Multiple Major Landmasses")] multileMajorLandmasses, [Description("Supercontinent")] superContinent };
     internal enum TerritoryBaseTerrain { Forest, Mountain, Plains, Swamp, Wasteland };
-
+    internal enum Landmarks { Canyon, CaveNetwork, Crater, Mountain, Volcano, Exceptional };
 
     internal enum Habitability { Inhospitable = 0,
         [Description("Trapped Water")] TrappedWater,
@@ -62,9 +65,6 @@ namespace WH40K_System_Generator
 
         public Planet()
         {
-            generateOrbitalFeatures(this);
-
-            generateResources();
         }
 
         public Planet(bool isMoon, bool isLesserMoon)
@@ -80,14 +80,47 @@ namespace WH40K_System_Generator
                     this.resourcesAvailable.Add(new MineralResource(RNG.RandNumber(4, 51) + 5));
                 }
             }
+
+        }
+
+        public string MoonString()
+        {
+            string returnString = string.Empty;
+
+            if (this.isLesserMoon && this.resourcesAvailable.LongCount() > 0)
+                returnString += "\n\t\t\t\tLesser Moon: " + resourcesAvailable.First().ToString();
+            else if (this.isLesserMoon)
+                returnString += "\n\t\t\tLesser Moon";
+            else if (this.isMoon)
+            {
+                returnString = (this as RockyPlanet).MoonToString();
+            }
+
+
+            return returnString;
+        }
+
+        public override string ToString()
+        {
+            string returnString = string.Empty;
+
+            if (!this.isLesserMoon)
+                return string.Empty;
+
+            returnString += "\n\t\t\tLesser Moon";
+
+            foreach (Resource resource in resourcesAvailable)
+                returnString += "\n\t\t\t\tResource: " + resource.ToString();
+
+            return returnString;
         }
 
         internal void generateResources()
         {
             int baseResourcesAmt = 0;
             int additionalResourcesAmt = 0;
-
-
+            RockyPlanet p = (this as RockyPlanet);
+            
             if (this.planetBody == Body.Small || this.planetBody == Body.SmallDense)
             {
                 baseResourcesAmt = Math.Max(0, RNG.RandNumber(1, 6) - 2);
@@ -102,6 +135,44 @@ namespace WH40K_System_Generator
             {
                 baseResourcesAmt = RNG.RandNumber(0, 11);
                 additionalResourcesAmt = Math.Max(0, RNG.RandNumber(1, 6) - 1);
+            }
+
+            for (int i =0; i<baseResourcesAmt;i++)
+            {
+                this.resourcesAvailable.Add(new MineralResource(Resource.GenerateAbundance()));
+            }
+            for (int i=0; i<additionalResourcesAmt;i++)
+            {
+                int roll = RNG.RandNumber(0, 11);
+
+                // Planets that can't support "normal" life dont have organic compounds.
+                if (p.planetHabitability!=Habitability.LimitedEcosystem && p.planetHabitability!=Habitability.Verdant && p.planetHabitability!=Habitability.LiquidWater)
+                {
+                    while (roll == 7 || roll == 8)
+                        roll = RNG.RandNumber(0, 11);
+                }
+
+                switch (RNG.RandNumber(0,11))
+                {
+                    case 1:
+                    case 2:
+                        this.resourcesAvailable.Add(new Archeotech(Resource.GenerateAbundance()));
+                        break;
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                        this.resourcesAvailable.Add(new MineralResource(Resource.GenerateAbundance()));
+                        break;
+                    case 7:
+                    case 8:
+                        this.resourcesAvailable.Add(new OrganicResource(Resource.GenerateAbundance()));
+                        break;
+                    case 9:
+                    case 10:
+                        this.resourcesAvailable.Add(new XenosResource(Resource.GenerateAbundance()));
+                        break;
+                }
             }
 
         }
@@ -131,16 +202,31 @@ namespace WH40K_System_Generator
             return 0;
         }
 
-        internal List<object> generateOrbitalFeatures(Planet planet)
+        internal List<OrbitalFeature> generateOrbitalFeatures(Planet planet)
         {
+            return generateOrbitalFeatures(planet, false);
+        }
+
+        internal List<OrbitalFeature> generateOrbitalFeatures(Planet planet, bool isGasGiant)
+        {
+            Debug.WriteLine("Start of generate orbital features");
+
             if (this.isMoon || this.isLesserMoon)
                 return null;
 
-            List<object> orbitalFeatures = new List<object>();
+            RockyPlanet p;
+            if (!planet.isMoon && !planet.isLesserMoon)
+                p = planet as RockyPlanet;
+            else
+                p = null;
+
+            List<OrbitalFeature> orbitalFeatures = new List<OrbitalFeature>();
 
             // Oribtal Features. Low Gravity = -10, High Gravity = +10
             for (int i = 1; i <= orbitalFeaturesAmt; i++)
             {
+                Debug.WriteLine("Inside for orbitalfeatures, amt: " + orbitalFeaturesAmt + " planet: " + (p == null ? "notplanet" : "planet"));
+
                 int roll = RNG.RandNumber(0, 101);
 
                 GravityModifications(roll, this.gravity);
@@ -156,10 +242,10 @@ namespace WH40K_System_Generator
                         orbitalFeatures.Add(OrbitalFeature.LesserMoon);
                         moonList.Add(new Planet(false, true));
                     }
-                    else
+                    else if ( p != null)
                     {
                         orbitalFeatures.Add(OrbitalFeature.Moon);
-                        moonList.Add(new Planet(true, false));
+                        moonList.Add(new RockyPlanet((p as RockyPlanet).zone, true));
                     }
                 }
                 else if (planet.GetType() == typeof(GasGiant))
@@ -175,10 +261,10 @@ namespace WH40K_System_Generator
                         orbitalFeatures.Add(OrbitalFeature.LesserMoon);
                         moonList.Add(new Planet(false, true));
                     }
-                    else if (roll <= 101)
+                    else if (roll <= 101 && p !=null)
                     {
                         orbitalFeatures.Add(OrbitalFeature.Moon);
-                        moonList.Add(new Planet(true, false));
+                        moonList.Add(new RockyPlanet((p as RockyPlanet).zone, true));
                     }
                 }
             }
@@ -196,6 +282,7 @@ namespace WH40K_System_Generator
         internal Habitability planetHabitability;
         internal LandmassType landmasses;
         int numberOfContinents;
+        internal ZoneType zone;
 
         public RockyPlanet(ZoneType zone, bool isMoon) : base(isMoon, false)
         {
@@ -207,20 +294,72 @@ namespace WH40K_System_Generator
 
             generateAtmosphere();
 
+            this.zone = zone;
             GenerateClimate(zone);
 
             if (this.atmospherePresence != AtmospherePresence.None && (this.atmosphereComposition == AtmosphereComposition.Tainted || this.atmosphereComposition == AtmosphereComposition.Pure))
                 GenerateHabitability();
 
             GenerateLandmasses();
-            
+            Debug.WriteLine(this.planetBody.ToString());
+
+            generateResources();
+
+            generateOrbitalFeatures(this);
+        }
+
+
+        public string MoonToString()
+        {
+            string returnString = string.Empty;
+
+            returnString = "\n\t\t\tElement: Moon (" + this.planetBody.ToString() + ")";
+            returnString += "\n\t\t\t\tAtmosphere: " + atmosphereComposition.ToString() + "(" + atmospherePresence.ToString() + ")";
+            returnString += "\n\t\t\t\tClimate: " + planetClimate.ToString();
+            returnString += "\n\t\t\t\tHabitability: " + planetHabitability.ToString();
+            returnString += "\n\t\t\t\tLandmasses: " + landmasses.ToString();
+            if (landmasses != LandmassType.superContinent && numberOfContinents > 0)
+                returnString += " (" + numberOfContinents + ")";
+            if (territories.LongCount() > 0)
+            {
+                returnString += "\n\t\t\t\tEnvironments:";
+                foreach (Territory t in territories)
+                {
+                    returnString += t.MoonToString();
+                }
+            }
+
+            if (orbitalFeaturesAmt > 0)
+            {
+                returnString += "\n\t\t\t\tOrbital Features:";
+                foreach (OrbitalFeature f in orbitalFeatures)
+                {
+                    if (f == OrbitalFeature.Moon || f == OrbitalFeature.LesserMoon)
+                    {
+                        // DO nothing because moons are listed later.
+                    }
+                    else
+                    {
+                        returnString += "\n\t\t\t\t\t" + f.ToString();
+                    }
+                }
+            }
+
+            foreach (Planet m in moonList)
+                returnString += "\n\t\t" + m.ToString();
+
+            returnString += "\n\t\t\tResources:";
+            foreach (Resource resource in resourcesAvailable)
+                returnString += "\n\t\t\t\tResource: " + resource.ToString();
+
+            return returnString + base.ToString();
         }
 
         public override string ToString()
         {
             string returnString = string.Empty;
 
-            returnString = "\tElement: Rocky Planet";
+            returnString = "\n\tElement: Rocky Planet ("+this.planetBody.ToString()+")";
             returnString += "\n\t\tAtmosphere: " + atmosphereComposition.ToString() + "(" + atmospherePresence.ToString() + ")";
             returnString += "\n\t\tClimate: " + planetClimate.ToString();
             returnString += "\n\t\tHabitability: " + planetHabitability.ToString();
@@ -235,6 +374,34 @@ namespace WH40K_System_Generator
                     returnString += t.ToString();
                 }
             }
+
+            if (orbitalFeaturesAmt > 0)
+            {
+                returnString += "\n\t\tOrbital Features:";
+                foreach (OrbitalFeature f in orbitalFeatures)
+                {
+                    if (f == OrbitalFeature.Moon || f == OrbitalFeature.LesserMoon)
+                    {
+                        // DO nothing because moons are listed later.
+                    }
+                    else
+                    {
+                        returnString += "\n\t\t\t" + f.ToString();
+                    }
+                }
+            }
+
+            foreach (Planet m in moonList)
+            {
+                if (m.isMoon == true)
+                    returnString += (m as RockyPlanet).MoonToString();
+                else
+                    returnString += m.ToString();
+            }
+
+            returnString += "\n\t\tResources:";
+            foreach (Resource resource in resourcesAvailable)
+                returnString += "\n\t\t\t"+ resource.ToString();
 
             return returnString;
         }
@@ -258,7 +425,7 @@ namespace WH40K_System_Generator
 
             for (int i = 1; i <= numberOfTerritories; i++)
             {
-                territories.Add(new Territory());
+                territories.Add(new Territory(this));
             }
         }
 
@@ -400,6 +567,7 @@ namespace WH40K_System_Generator
 
         private int GenerateRockyPlanetBody(int gravityRoll)
         {
+
             switch (RNG.RandNumber(0, 11))
             {
                 case 1:
@@ -479,6 +647,9 @@ namespace WH40K_System_Generator
 
             // Generating Gravity
             GenerateGasGiantGravity(gravityRoll);
+
+            //Orbital Features
+            generateOrbitalFeatures(this, true);
         }
 
         private int GenerateGasGiant(int gravityRoll)
@@ -543,6 +714,11 @@ namespace WH40K_System_Generator
                     break;
             }
         }
+
+        public override string ToString()
+        {
+            return "";
+        }
     }
 
 
@@ -550,9 +726,12 @@ namespace WH40K_System_Generator
     {
         internal Tuple<string,string,TerritoryBaseTerrain> baseTerrain;
         OrganicResource resource = null;
+        internal List<Landmarks> landmarksList = new List<Landmarks>();
+        Planet planet;
 
-        public Territory()
+        public Territory(Planet p)
         {
+            this.planet = p;
             int roll = RNG.RandNumber(0, 6);
             int traitRoll = RNG.RandNumber(0, 101);
             string trait1 = string.Empty;
@@ -588,7 +767,34 @@ namespace WH40K_System_Generator
                     traitRoll = RNG.RandNumber(0, 101);
 
                 trait2 = GenerateTrait(traitRoll, terrain);
+
             }
+
+            if (planet.planetBody == Body.Small || planet.planetBody == Body.SmallDense)
+                roll = RNG.RandNumber(0, 6);
+            else if (planet.planetBody == Body.Large || planet.planetBody == Body.LargeDense)
+                roll = RNG.RandNumber(0, 6) + 2;
+            else if (planet.planetBody == Body.Vast)
+                roll = RNG.RandNumber(0, 6) + 3;
+
+            for (int i = 1; i <= roll; i++)
+            {
+                traitRoll = RNG.RandNumber(0, 101);
+                if (traitRoll <= 20)
+                    landmarksList.Add(Landmarks.Canyon);
+                else if (traitRoll <= 35)
+                    landmarksList.Add(Landmarks.CaveNetwork);
+                else if (traitRoll <= 45)
+                    landmarksList.Add(Landmarks.Crater);
+                else if (traitRoll <= 65)
+                    landmarksList.Add(Landmarks.Mountain);
+                else if (traitRoll <= 75)
+                    landmarksList.Add(Landmarks.Volcano);
+                else
+                    landmarksList.Add(Landmarks.Exceptional);
+                    
+            }
+
 
             this.baseTerrain = new Tuple<string, string, TerritoryBaseTerrain>(trait1, trait2, terrain);
         }
@@ -612,6 +818,37 @@ namespace WH40K_System_Generator
                 if (trait2 == "Unique Compound")
                     returnString += "\n\t\t\t\tResource: " + resource.ToString();
             }
+
+            returnString += "\n\t\t\tLandmarks:";
+            foreach (Landmarks l in landmarksList)
+                returnString += "\n\t\t\t\t" + l.ToString();
+
+            return returnString;
+        }
+
+        public string MoonToString()
+        {
+            string returnString = string.Empty;
+            string trait1 = this.baseTerrain.Item1;
+            string trait2 = this.baseTerrain.Item2;
+            TerritoryBaseTerrain terrain = this.baseTerrain.Item3;
+
+            if (trait2 == string.Empty)
+                returnString = "\n\t\t\t\tEnvironment: " + terrain.ToString() + " (" + trait1 + ")";
+            else
+                returnString = "\n\t\t\t\tEnvironment: " + terrain.ToString() + " (" + trait1 + ", " + trait2 + ")";
+
+            if (terrain == TerritoryBaseTerrain.Forest)
+            {
+                if (trait1 == "Unique Compound")
+                    returnString += "\n\t\t\t\t\tResource: " + resource.ToString();
+                if (trait2 == "Unique Compound")
+                    returnString += "\n\t\t\t\t\tResource: " + resource.ToString();
+            }
+
+            returnString += "\n\t\t\t\tLandmarks:";
+            foreach (Landmarks l in landmarksList)
+                returnString += "\n\t\t\t\t\t" + l.ToString();
 
             return returnString;
         }

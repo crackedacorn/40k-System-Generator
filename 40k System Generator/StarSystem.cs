@@ -564,6 +564,8 @@ namespace WH40K_System_Generator
             }
             if (this.GetType() == typeof(ZoneElementPlanet))
                 s += "\n"+ this.ToString();
+            if (this.GetType() == typeof(ZoneElementGasGiant))
+                s += "\n" + this.ToString();
 
             return s;
         }
@@ -754,10 +756,12 @@ namespace WH40K_System_Generator
         public ZoneElementGasGiant(ZoneType zone)
             : base("Gas Giant")
         {
-            this.planet = new Planet();
+            this.planet = new GasGiant();
         }
 
+        public override string ToString()
+        {
+            return planet.ToString();
+        }
     }
-
-
 }
