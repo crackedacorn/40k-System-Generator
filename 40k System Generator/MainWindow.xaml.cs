@@ -35,9 +35,9 @@ namespace _40k_System_Generator
             scrollTestingOutput.ScrollToHome();
 
             boxTestingOutput.IsReadOnly = false;
-            boxTestingOutput.Text = string.Empty;
 
             boxTestingOutput.Text = ss.ToString();
+
             boxTestingOutput.IsReadOnly = true;
         }
         

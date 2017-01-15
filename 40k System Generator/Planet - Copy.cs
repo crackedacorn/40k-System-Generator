@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using _40k_System_Generator;
 
 namespace WH40K_System_Generator
 {
@@ -35,6 +36,7 @@ namespace WH40K_System_Generator
     internal enum LandmassType {[Description("Multiple Landmasess")] multipleLandmasses = 0, [Description("Multiple Major Landmasses")] multileMajorLandmasses, [Description("Supercontinent")] superContinent };
     internal enum TerritoryBaseTerrain { Forest, Mountain, Plains, Swamp, Wasteland };
     internal enum Landmarks { Canyon, CaveNetwork, Crater, Mountain, Volcano, Exceptional };
+    internal enum PlanetType { Jungle, Ocean, Temperate, Death, Volcanic, Ice, Desert };
 
     internal enum Habitability { Inhospitable = 0,
         [Description("Trapped Water")] TrappedWater,
@@ -106,7 +108,7 @@ namespace WH40K_System_Generator
 
             if (!this.isLesserMoon)
                 return string.Empty;
-
+            
             returnString += "\n\t\t\tLesser Moon";
 
             foreach (Resource resource in resourcesAvailable)
@@ -283,6 +285,7 @@ namespace WH40K_System_Generator
         internal LandmassType landmasses;
         int numberOfContinents;
         internal ZoneType zone;
+        internal PlanetType? planetType = null;
 
         public RockyPlanet(ZoneType zone, bool isMoon) : base(isMoon, false)
         {
@@ -355,11 +358,13 @@ namespace WH40K_System_Generator
             return returnString + base.ToString();
         }
 
+        
         public override string ToString()
         {
             string returnString = string.Empty;
+            
 
-            returnString = "\n\tElement: Rocky Planet ("+this.planetBody.ToString()+")";
+            returnString = "\n\tElement: Rocky Planet: "+this.planetType+ " ("+this.planetBody.ToString()+")";
             returnString += "\n\t\tAtmosphere: " + atmosphereComposition.ToString() + "(" + atmospherePresence.ToString() + ")";
             returnString += "\n\t\tClimate: " + planetClimate.ToString();
             returnString += "\n\t\tHabitability: " + planetHabitability.ToString();
@@ -481,32 +486,71 @@ namespace WH40K_System_Generator
             }
 
             if (roll <= 1)
+            {
                 this.planetHabitability = Habitability.Inhospitable;
+                this.planetType = (planetType != null ? PlanetType.Death : planetType);
+            }
             else if (roll <= 3)
+            {
                 this.planetHabitability = Habitability.TrappedWater;
+                this.planetType = (planetType != null ? PlanetType.Desert : planetType);
+            }
             else if (roll <= 5)
+            {
                 this.planetHabitability = Habitability.LiquidWater;
+                this.planetType = (planetType != null ? PlanetType.Ocean : planetType);
+            }
             else if (roll <= 7)
+            {
                 this.planetHabitability = Habitability.LimitedEcosystem;
+                if (planetType != null)
+                {
+                    if (RNG.RandNumber(0, 100) < 51)
+                        this.planetType = PlanetType.Temperate;
+                    else
+                        this.planetType = PlanetType.Desert;
+                }
+            }
             else
+            {
                 this.planetHabitability = Habitability.Verdant;
+                if (planetType != null)
+                {
+                    if (RNG.RandNumber(0, 100) < 51)
+                        this.planetType = PlanetType.Jungle;
+                    else
+                        this.planetType = PlanetType.Temperate;
+                }
+            }
 
-        }
+}
 
         private void GenerateClimate(ZoneType zone)
         {
             if (this.atmospherePresence==AtmospherePresence.None)
             {
                 if (zone == ZoneType.InnerCauldron)
+                {
                     this.planetClimate = Climate.Burning;
+                    this.planetType = PlanetType.Volcanic;
+                }
                 else if (zone == ZoneType.OuterReaches)
+                {
                     this.planetClimate = Climate.Ice;
+                    this.planetType = PlanetType.Ice;
+                }
                 else
                 {
                     if (RNG.RandNumber(0, 100) < 51)
+                    {
                         this.planetClimate = Climate.Burning;
+                        this.planetType = PlanetType.Volcanic;
+                    }
                     else
+                    {
                         this.planetClimate = Climate.Ice;
+                        this.planetType = PlanetType.Ice;
+                    }
                 }
 
                 return;
@@ -520,15 +564,27 @@ namespace WH40K_System_Generator
                 roll += 6;
 
             if (roll <= 0)
+            {
                 this.planetClimate = Climate.Burning;
+                this.planetType = PlanetType.Volcanic;
+            }
             else if (roll <= 3)
+            {
                 this.planetClimate = Climate.Hot;
+            }
             else if (roll <= 7)
+            {
                 this.planetClimate = Climate.Temperate;
+            }
             else if (roll <= 10)
+            {
                 this.planetClimate = Climate.Cold;
+            }
             else
+            {
                 this.planetClimate = Climate.Ice;
+                this.planetType = PlanetType.Ice;
+            }
         }
 
         private void generateAtmosphere()
