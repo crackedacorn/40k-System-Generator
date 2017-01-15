@@ -29,6 +29,9 @@ namespace WH40K_System_Generator
     internal enum AtmospherePresence { None = 0, Thin, Moderate, Heavy };
     internal enum AtmosphereComposition { Deadly = 0, Corrosive, Toxic, Tainted, Pure };
     internal enum Climate { Burning = 0, Hot, Temperate, Cold, Ice };
+    internal enum LandmassType {[Description("Multiple Landmasess")] multipleLandmasses = 0, [Description("Multiple Major Landmasses")] multileMajorLandmasses, [Description("Supercontinent")] superContinent };
+    internal enum TerritoryBaseTerrain { Forest, Mountain, Plains, Swamp, Wasteland };
+
 
     internal enum Habitability { Inhospitable = 0,
         [Description("Trapped Water")] TrappedWater,
@@ -59,6 +62,8 @@ namespace WH40K_System_Generator
 
         public Planet()
         {
+
+            generateOrbitalFeatures(this);
         }
         
         public Planet(bool isMoon, bool isLesserMoon)
@@ -74,9 +79,6 @@ namespace WH40K_System_Generator
                     this.resourcesAvailable.Add(new MineralResource(RNG.RandNumber(4, 51) + 5));
                 }
             }
-
-            if (!isMoon && !isLesserMoon)
-                generateOrbitalFeatures(this);
         }
 
         internal int GravityModifications(int roll, Gravity gravity)
@@ -166,14 +168,16 @@ namespace WH40K_System_Generator
         internal AtmosphereComposition atmosphereComposition;
         internal Climate planetClimate;
         internal Habitability planetHabitability;
+        internal LandmassType landmasses;
+        int numberOfContinents;
 
-        public RockyPlanet(ZoneType zone) : base()
+        public RockyPlanet(ZoneType zone, bool isMoon) : base(isMoon, false)
         {
-            int gravityRoll = RNG.RandNumber(0, 11);
+            int roll = RNG.RandNumber(0, 11);
 
-            gravityRoll = GenerateRockyPlanetBody(gravityRoll);
+            roll = GenerateRockyPlanetBody(roll);
 
-            GenerateRockyPlanetGravity(gravityRoll);
+            GenerateRockyPlanetGravity(roll);
 
             generateAtmosphere();
 
@@ -181,6 +185,67 @@ namespace WH40K_System_Generator
 
             if (this.atmospherePresence != AtmospherePresence.None && (this.atmosphereComposition == AtmosphereComposition.Tainted || this.atmosphereComposition == AtmosphereComposition.Pure))
                 GenerateHabitability();
+
+            GenerateLandmasses();
+            
+        }
+
+        public override string ToString()
+        {
+            string returnString = string.Empty;
+
+            returnString = "\tElement: Rocky Planet";
+            returnString += "\n\t\tAtmosphere: " + atmosphereComposition.ToString() + "(" + atmospherePresence.ToString() + ")";
+            returnString += "\n\t\tClimate: " + planetClimate.ToString();
+            returnString += "\n\t\tHabitability: " + planetHabitability.ToString();
+            returnString += "\n\t\tLandmasses: " + landmasses.ToString();
+            if (landmasses != LandmassType.superContinent && numberOfContinents>0)
+                returnString += " (" + numberOfContinents + ")";
+
+            return returnString;
+        }
+
+        private void GenerateEnvironments()
+        { }
+
+        private void GenerateLandmasses()
+        {
+            int roll = RNG.RandNumber(0, 11);
+            if (roll >= 8)
+            {
+                this.landmasses = LandmassType.multipleLandmasses;
+                this.numberOfContinents = Math.Max(1, RNG.RandNumber(0, 6));
+            }
+            else if (roll >= 4 && (this.planetHabitability == Habitability.LiquidWater || this.planetHabitability == Habitability.Verdant))
+            {
+                this.landmasses = LandmassType.multileMajorLandmasses;
+                this.numberOfContinents = Math.Max(1, RNG.RandNumber(0, 6));
+            }
+            else if (this.planetHabitability == Habitability.LiquidWater || this.planetHabitability == Habitability.Verdant)
+                this.landmasses = LandmassType.superContinent;
+            else
+            {
+                switch (RNG.RandNumber(1,4))
+                {
+                    case 1:
+                        this.landmasses = LandmassType.multipleLandmasses;
+                        this.numberOfContinents = Math.Max(1, RNG.RandNumber(0, 6));
+                        break;
+                    case 2:
+                        this.landmasses = LandmassType.multileMajorLandmasses;
+                        this.numberOfContinents = Math.Max(1, RNG.RandNumber(0, 6));
+                        break;
+                    case 3:
+                        this.landmasses = LandmassType.superContinent;
+                        break;
+                    default:
+                        this.landmasses = LandmassType.multipleLandmasses;
+                        this.numberOfContinents = Math.Max(1, RNG.RandNumber(0, 6));
+                        break;
+                }
+            }
+
+            GenerateEnvironments();
         }
 
         private void GenerateHabitability()
@@ -426,4 +491,70 @@ namespace WH40K_System_Generator
         }
     }
 
+
+    class Territory
+    {
+        internal Tuple<string,string,TerritoryBaseTerrain> baseTerrain;
+
+        public Territory()
+        {
+            int roll = RNG.RandNumber(0, 6);
+            int traitRoll = RNG.RandNumber(0, 101);
+            int traitRoll2 = RNG.RandNumber(0, 101);
+            string trait1 = string.Empty;
+            string trait2 = string.Empty;
+            TerritoryBaseTerrain terrain;
+
+            if (roll == 1)
+            {
+                terrain = TerritoryBaseTerrain.Forest;
+                if (roll < 96)
+                    trait1 = GenerateTrait(roll, terrain);
+                else
+                {
+                    while (roll >= 96)
+                        roll = RNG.RandNumber(0, 101);
+
+                    trait1 = GenerateTrait(roll, terrain);
+                    while (roll >= 96)
+                        roll = RNG.RandNumber(0, 101);
+
+                    trait2 = GenerateTrait(roll, terrain);
+                }
+            }
+            else if (roll == 2)
+                terrain = TerritoryBaseTerrain.Mountain;
+            else if (roll == 3)
+                terrain = TerritoryBaseTerrain.Plains;
+            else if (roll == 4)
+                terrain = TerritoryBaseTerrain.Swamp;
+            else
+                terrain = TerritoryBaseTerrain.Wasteland;
+
+            this.baseTerrain = new Tuple<string, string, TerritoryBaseTerrain>(trait1, trait2, terrain);
+        }
+
+        internal string GenerateTrait(int roll, TerritoryBaseTerrain terrain)
+        {
+            string trait = string.Empty;
+
+            if (terrain==TerritoryBaseTerrain.Forest)
+            {
+                if (roll <= 5)
+                    trait = "Exotic Nature";
+                else if (roll <= 25)
+                    trait = "Expansive";
+                else if (roll <= 40)
+                    trait="Extreme Temperature";
+                else if (roll <= 65)
+                    trait="Notable Species";
+                else if (roll <= 80)
+                    trait="Unique Compound";
+                else if (roll <= 95)
+                    trait="Unusual Location";
+            }
+
+            return trait;
+        }
+    }
 }

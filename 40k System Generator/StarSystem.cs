@@ -12,7 +12,7 @@ namespace WH40K_System_Generator
     internal enum ZoneStrength { Normal = 0, Weak, Dominant };
     internal enum ResourceType { Mineral = 0, Archeotech, Xenos, Organic, Random };
 
-    class StarSystem
+    public class StarSystem
     {
         public KeyFeatureType keyFeature;
         Star star;
@@ -349,7 +349,6 @@ namespace WH40K_System_Generator
     {
         public List<StellarZoneElement> zoneElements = new List<StellarZoneElement>();
         ZoneStrength zoneStrength;
-        ZoneType zoneType;
 
         public StellarZone(ZoneStrength zs, ZoneType zoneType)
         {
@@ -737,7 +736,7 @@ namespace WH40K_System_Generator
         public ZoneElementPlanet(ZoneType zoneType)
             : base("Planet")
         {
-            this.planet = new RockyPlanet(zoneType);
+            this.planet = new RockyPlanet(zoneType, false);
         }
 
         public override string ToString()

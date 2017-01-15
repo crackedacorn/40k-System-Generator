@@ -1,6 +1,14 @@
-f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\bin\Debug\40k System Generator.exe.config
-f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator.csprojResolveAssemblyReference.cache
 f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\MainWindow.g.cs
 f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\App.g.cs
 f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator_MarkupCompile.cache
 f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator_MarkupCompile.lref
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\bin\Debug\40k System Generator.exe.config
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\bin\Debug\40k System Generator.exe
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\bin\Debug\40k System Generator.pdb
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\MainWindow.baml
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator.g.resources
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\_40k_System_Generator.Properties.Resources.resources
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator.csproj.GenerateResource.Cache
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator.exe
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator.pdb
+f:\documents\visual studio 2015\Projects\40k System Generator\40k System Generator\obj\Debug\40k System Generator.csprojResolveAssemblyReference.cache

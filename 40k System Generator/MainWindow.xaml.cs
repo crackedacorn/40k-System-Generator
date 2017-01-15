@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WH40K_System_Generator;
 
 namespace _40k_System_Generator
 {
@@ -20,9 +21,23 @@ namespace _40k_System_Generator
     /// </summary>
     public partial class MainWindow : Window
     {
+        internal StarSystem ss;
+
         public MainWindow()
         {
             InitializeComponent();
         }
+
+        private void buttonGenerateSystem_Click(object sender, RoutedEventArgs e)
+        {
+            ss = new StarSystem();
+
+            boxTestingOutput.IsReadOnly = false;
+            boxTestingOutput.Text = string.Empty;
+
+            boxTestingOutput.Text = ss.ToString();
+            boxTestingOutput.IsReadOnly = true;
+        }
+        
     }
 }

@@ -7,29 +7,29 @@ using System.Threading.Tasks;
 
 namespace WH40K_System_Generator
 {
-    internal enum KeyFeatureType { Bountiful = 0, [Description("Gravity Tides")] GravityTides, Haven,
+    public enum KeyFeatureType { Bountiful = 0, [Description("Gravity Tides")] GravityTides, Haven,
         [Description("Ill-Omened")] IllOmened, [Description("Pirate Den")] PirateDen, [Description("Ruined Empire")] RuinedEmpire,
         Starfarers, [Description("Stellar Anomaly")] StellarAnomaly, [Description("Warp Stasis")] WarpStasis,
         [Description("Warp Turbulence")] WarpTurbulence };
     public enum StarType { Mighty = 0, Vigorous, Luminous, Dull, Anomalous, Binary };
 
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            for (; ; )
-            {
-                StarSystem ss = new StarSystem();
+    //class Program
+    //{
+    //    static void Main(string[] args)
+    //    {
+    //        for (; ; )
+    //        {
+    //            StarSystem ss = new StarSystem();
 
-                Console.WriteLine(ss.ToString());
+    //            Console.WriteLine(ss.ToString());
 
-                Console.WriteLine("=================================================");
-                Console.WriteLine("Ctrl-c to exit, or ENTER to generate a new system");
-                Console.WriteLine("=================================================\n");
-                Console.Read();
-            }
-        }
-    }
+    //            Console.WriteLine("=================================================");
+    //            Console.WriteLine("Ctrl-c to exit, or ENTER to generate a new system");
+    //            Console.WriteLine("=================================================\n");
+    //            Console.Read();
+    //        }
+    //    }
+    //}
 
     class RNG
     {
